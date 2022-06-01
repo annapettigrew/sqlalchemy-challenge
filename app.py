@@ -23,6 +23,11 @@ Measurement = Base.classes.measurement
 # Setting up Flask
 app = Flask(__name__)
 
+# Getting the Dates
+most_recent_date = "2017-08-23"
+most_recent_date_dt = dt.datetime.strptime(most_recent_date, "%Y-%m-%d")
+time_d = most_recent_date_dt - dt.timedelta(days=366)
+
 # Setting up Flask Routes
 @app.route("/")
 def welcome():
@@ -87,8 +92,11 @@ def stations():
 @app.route("/api/v1.0/<start>")
 def start_date(start): 
     session = Session(engine)
+    
+    end_d = most_recent_date
+
     start_day = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start ).all()
+        filter(Measurement.date <= end_d ).all()
     start_list = []
     for min,max,avg in start_day:
         start_dict = {}
@@ -101,20 +109,20 @@ def start_date(start):
     
 # Start/End Range
 @app.route("/api/v1.0/<start>/<end>")
-def start_end_date(start, end):
+def start_end_date(start,end): 
     session = Session(engine)
-    start_end_day = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start).\
-            filter(Measurement.date <= end).all()
-    
+
+    end_d = most_recent_date
+
+    start_day = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date <= end_d ).all()
     end_list = []
-    for min,max,avg in start_end_day:
+    for min,max,avg in start_day:
         end_dict = {}
         end_dict["Min"] = min
         end_dict["Average"] = avg
         end_dict["Max"] = max
         end_list.append(end_dict)
-
     session.close()
     return jsonify(end_dict)
 
