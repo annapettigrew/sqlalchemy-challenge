@@ -55,7 +55,8 @@ def precipitation():
     prcp_list = []
     for date, prcp in prec_output:
         data = {}
-        data[date] = prcp
+        data["Date"] = date
+        data["Prcp In Inches"] = prcp
         prcp_list.append(data)
     return jsonify(prcp_list)
 
@@ -74,20 +75,21 @@ def stations():
         station_list.append(list)
     return jsonify(station_list)
 
-# # Temperature List 
-# @app.route("/api/v1.0/tobs")
-# def tobs():
-#     session = Session(engine)
-#     active_temp = session.query(Station.name, Measurement.date, Measurement.tobs).\
-#         filter(Measurement.date >= '2016-08-23', Measurement.date <= '2017-08-23').all()
-#     temp_list = []
-#     for temp in active_temp:
-#         tobs = {}
-#         tobs['Date'] = temp[1]
-#         tobs['Station'] = temp[0]
-#         tobs['Temperature'] = int(temp[2])
-#         temp_list.append(tobs)
-#     return jsonify(temp_list)
+# Temperature List 
+@app.route("/api/v1.0/tobs")
+def tobs():
+    session = Session(engine)
+    active_temp = session.query(Station.name, Measurement.date, Measurement.tobs).\
+        filter(Measurement.date >= '2016-08-23', Measurement.date <= '2017-08-23').all()
+    temp_list = []
+    for temp in active_temp:
+        tobs = {}
+        tobs['Date'] = temp[1]
+        tobs['Station'] = temp[0]
+        tobs['Temperature'] = int(temp[2])
+        temp_list.append(tobs)
+        session.close()
+    return jsonify(temp_list)
 
 @app.route("/api/v1.0/<start>")
 def start_date(start): 
@@ -125,33 +127,6 @@ def start_end_date(start,end):
         end_list.append(end_dict)
     session.close()
     return jsonify(end_dict)
-
-@app.route("/api/v1.0/tobs")
-def tobs():
-    session = Session(engine)
-
-    #getting the dates
-    latest_date = session.query(Measurement.date).order_by(Measurement.date()).first()
-    last_year = (dt.datetime.strptime(latest_date[0],'%Y-%m-%d') \
-                    - dt.timedelta(days=365)).strftime('%Y-%m-%d')
-
-    #query for the dates and temperature values
-    results =   session.query(Measurement.date, Measurement.tobs).\
-                filter(Measurement.date >= last_year).\
-                order_by(Measurement.date).all()
-
-    #convert to list of dictionaries to jsonify
-    tobs_list = []
-
-    for date, tobs in results:
-        list = {}
-        list["Date"] = date
-        list["Tobs"] = tobs
-        tobs_list.append(list)
-
-    session.close()
-
-    return jsonify(tobs_list)
 
 # Running the app
 if __name__ == "__main__":
